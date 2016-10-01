@@ -4,6 +4,31 @@
 static Window *s_main_window;
 static TextLayer *s_hello_text;
 
+static unsigned int s_seconds_left;
+//10 = buffer size
+static char s_buffer[10];
+
+static void tick_handler(struct tm *tick_time, TimeUnits units_changed) {
+    s_seconds_left -= units_changed;
+
+    unsigned int last_digit_gone = s_seconds_left;
+    unsigned int remaining = s_seconds_left;
+
+    //10 = buffer size
+    for(int i = 10; i > 0; i--)
+    {
+        last_digit_gone = (last_digit_gone / 10) * 10;
+        //Should be using last value of last_digit_gone, not s_seconds_left????
+        unsigned int last_digit = remaining - last_digit_gone;
+        remaining = (remaining /10);
+        last_digit_gone = last_digit_gone / 10;
+
+        s_buffer[i-1] = (char)last_digit + '0';
+    }
+
+    text_layer_set_text(s_hello_text, s_buffer);
+}
+
 static void main_window_load(Window *window)
 {
     //window information
@@ -24,7 +49,7 @@ static void main_window_load(Window *window)
     //format text
     text_layer_set_background_color(s_hello_text, GColorClear);
     text_layer_set_text_color(s_hello_text, GColorBlack);
-    text_layer_set_text(s_hello_text, "00000:00:00:00");
+    //text_layer_set_text(s_hello_text, "hello");
     text_layer_set_font(s_hello_text, fonts_get_system_font(FONT_KEY_GOTHIC_24_BOLD));
     text_layer_set_text_alignment(s_hello_text, GTextAlignmentCenter);
 
@@ -39,7 +64,11 @@ static void main_window_unload(Window *window)
 
 static void init()
 {
+    s_seconds_left = 100000;
+
     s_main_window = window_create();
+
+    tick_timer_service_subscribe(SECOND_UNIT, tick_handler);
 
     window_set_window_handlers(s_main_window, (WindowHandlers)
                                {
