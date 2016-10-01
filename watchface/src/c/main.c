@@ -24,7 +24,7 @@ static void main_window_load(Window *window)
     //format text
     text_layer_set_background_color(s_hello_text, GColorClear);
     text_layer_set_text_color(s_hello_text, GColorBlack);
-    text_layer_set_text(s_hello_text, "Hello World");
+    text_layer_set_text(s_hello_text, "00000:00:00:00");
     text_layer_set_font(s_hello_text, fonts_get_system_font(FONT_KEY_GOTHIC_24_BOLD));
     text_layer_set_text_alignment(s_hello_text, GTextAlignmentCenter);
 
