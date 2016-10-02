@@ -205,7 +205,7 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
     Tuple *demise_tuple = dict_find(iterator, MESSAGE_KEY_ETD);
     if(demise_tuple)
     {
-        int32_t etd = demise_tuple->value->int32;
+        uint32_t etd = demise_tuple->value->uint32;
         s_seconds_left = (unsigned int)etd;
     }
 }

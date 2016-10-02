@@ -1,6 +1,6 @@
 Pebble.addEventListener('ready', function() {
   var dict = {
-      ETD: 2133600000
+      ETD: 2207520000 >>> 0
   };
 
   Pebble.sendAppMessage(dict, function() {
