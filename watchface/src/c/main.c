@@ -11,8 +11,7 @@ static unsigned int s_days;
 
 static TextLayer *s_hello_text;
 static TextLayer *s_num_days_text;
-
-static char s_days_buffer[5];
+static TextLayer *s_hours_mins_secs_text;
 
 
 //10 = buffer size
@@ -84,7 +83,29 @@ static void tick_handler(struct tm *tick_time, TimeUnits units_changed)
     set_times();
 
     set_buffer(s_buffer, s_seconds_left, 10);
-    set_buffer(s_days_buffer, s_days, 5);
+
+    char days_buffer[5];
+    set_buffer(days_buffer, s_days, 5);
+
+    char hour_buffer[2];
+    set_buffer(hour_buffer, s_hours_this_day, 2);
+    char min_buffer[2];
+    set_buffer(min_buffer, s_mins_this_hour, 2);
+    char sec_buffer[2];
+    set_buffer(sec_buffer, s_secs_this_min, 2);
+
+    static char time_buffer[9];
+    time_buffer[0] = hour_buffer[0];
+    time_buffer[1] = hour_buffer[1];
+    time_buffer[2] = ':';
+    time_buffer[3] = min_buffer[0];
+    time_buffer[4] = min_buffer[1];
+    time_buffer[5] = ':';
+    time_buffer[6] = sec_buffer[0];
+    time_buffer[7] = sec_buffer[1];
+    time_buffer[8] = ' ';
+
+    text_layer_set_text(s_hours_mins_secs_text, time_buffer);
 
     text_layer_set_text(s_hello_text, s_buffer);
 
@@ -92,7 +113,7 @@ static void tick_handler(struct tm *tick_time, TimeUnits units_changed)
     static char days_text[10];
     for(int i = 0; i < 5; i++)
     {
-        days_text[i] = s_days_buffer[i];
+        days_text[i] = days_buffer[i];
     }
     days_text[5] = ' ';
     days_text[6] = 'D';
@@ -110,7 +131,7 @@ static void main_window_load(Window *window)
 
     //text information
     int text_x = 0;
-    int text_y = PBL_IF_ROUND_ELSE(58, 102);
+    int text_y = PBL_IF_ROUND_ELSE(58, 300);
     int text_width = bounds.size.w;
     int text_height = 50;
 
@@ -150,6 +171,28 @@ static void main_window_load(Window *window)
 
     //add days text ////////////////////////////////////////////
     layer_add_child(window_layer, text_layer_get_layer(s_num_days_text));
+
+    //text information
+    int time_x = 0;
+    int time_y = PBL_IF_ROUND_ELSE(58, 102);
+    int time_width = bounds.size.w;
+    int time_height = 50;
+
+    //create text
+    s_hours_mins_secs_text = text_layer_create(
+        GRect(time_x, time_y, time_width, time_height)
+    );
+
+    //format text
+    text_layer_set_background_color(s_hours_mins_secs_text, GColorClear);
+    text_layer_set_text_color(s_hours_mins_secs_text, GColorBlack);
+    text_layer_set_text(s_hours_mins_secs_text, "datetime");
+    text_layer_set_font(s_hours_mins_secs_text,
+        fonts_get_system_font(FONT_KEY_GOTHIC_24_BOLD));
+    text_layer_set_text_alignment(s_hours_mins_secs_text, GTextAlignmentCenter);
+
+    //add the text
+    layer_add_child(window_layer, text_layer_get_layer(s_hours_mins_secs_text));
 }
 
 static void main_window_unload(Window *window)
