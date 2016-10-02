@@ -2,20 +2,70 @@
 #include "main.h"
 
 static Window *s_main_window;
-static TextLayer *s_hello_text;
 
 static unsigned int s_seconds_left;
+static unsigned int s_secs_this_min;
+static unsigned int s_mins_this_hour;
+static unsigned int s_hours_this_day;
+static unsigned int s_days;
+
+static TextLayer *s_hello_text;
+static TextLayer *s_num_days_text;
+
+static char s_days_buffer[5];
+
+
 //10 = buffer size
 static char s_buffer[10];
 
-static void tick_handler(struct tm *tick_time, TimeUnits units_changed) {
-    s_seconds_left -= units_changed;
+static void set_times()
+{
+    unsigned int seconds = s_seconds_left;
 
-    unsigned int last_digit_gone = s_seconds_left;
-    unsigned int remaining = s_seconds_left;
+    s_secs_this_min = 0;
+    s_mins_this_hour = 0;
+    s_hours_this_day = 0;
+    s_days = 0;
 
-    //10 = buffer size
-    for(int i = 10; i > 0; i--)
+    const unsigned int SECS_IN_MIN = 60;
+    const unsigned int MINS_IN_HOUR = 60;
+    const unsigned int HOURS_IN_DAY = 24;
+
+    const unsigned int SECS_IN_DAY = SECS_IN_MIN * MINS_IN_HOUR * HOURS_IN_DAY;
+    const unsigned int SECS_IN_HOUR = MINS_IN_HOUR * SECS_IN_MIN;
+
+
+    while(seconds != 0)
+    {
+        if(seconds >= SECS_IN_DAY)
+        {
+            seconds -= SECS_IN_DAY;
+            s_days++;
+        }
+        else if(seconds >= SECS_IN_HOUR)
+        {
+            seconds -= SECS_IN_HOUR;
+            s_hours_this_day++;
+        }
+        else if(seconds >= SECS_IN_MIN)
+        {
+            seconds -= SECS_IN_MIN;
+            s_mins_this_hour++;
+        }
+        else
+        {
+            s_secs_this_min = seconds;
+            seconds -= s_secs_this_min;
+        }
+    }
+}
+
+static void set_buffer(char * buffer, unsigned int number, int length)
+{
+    unsigned int last_digit_gone = number;
+    unsigned int remaining = number;
+
+    for(int i = length; i > 0; i--)
     {
         last_digit_gone = (last_digit_gone / 10) * 10;
         //Should be using last value of last_digit_gone, not s_seconds_left????
@@ -23,10 +73,33 @@ static void tick_handler(struct tm *tick_time, TimeUnits units_changed) {
         remaining = (remaining /10);
         last_digit_gone = last_digit_gone / 10;
 
-        s_buffer[i-1] = (char)last_digit + '0';
+        buffer[i-1] = (char)last_digit + '0';
     }
+}
+
+static void tick_handler(struct tm *tick_time, TimeUnits units_changed)
+{
+    s_seconds_left -= units_changed;
+    //todo: delet this
+    set_times();
+
+    set_buffer(s_buffer, s_seconds_left, 10);
+    set_buffer(s_days_buffer, s_days, 5);
 
     text_layer_set_text(s_hello_text, s_buffer);
+
+
+    static char days_text[10];
+    for(int i = 0; i < 5; i++)
+    {
+        days_text[i] = s_days_buffer[i];
+    }
+    days_text[5] = ' ';
+    days_text[6] = 'D';
+    days_text[7] = 'a';
+    days_text[8] = 'y';
+    days_text[9] = 's';
+    text_layer_set_text(s_num_days_text, days_text);
 }
 
 static void main_window_load(Window *window)
@@ -37,7 +110,7 @@ static void main_window_load(Window *window)
 
     //text information
     int text_x = 0;
-    int text_y = PBL_IF_ROUND_ELSE(58, 52);
+    int text_y = PBL_IF_ROUND_ELSE(58, 102);
     int text_width = bounds.size.w;
     int text_height = 50;
 
@@ -49,12 +122,34 @@ static void main_window_load(Window *window)
     //format text
     text_layer_set_background_color(s_hello_text, GColorClear);
     text_layer_set_text_color(s_hello_text, GColorBlack);
-    //text_layer_set_text(s_hello_text, "hello");
+    text_layer_set_text(s_hello_text, "preparing");
     text_layer_set_font(s_hello_text, fonts_get_system_font(FONT_KEY_GOTHIC_24_BOLD));
     text_layer_set_text_alignment(s_hello_text, GTextAlignmentCenter);
 
     //add the text
     layer_add_child(window_layer, text_layer_get_layer(s_hello_text));
+
+    //days text info /////////////////////////////////////////////////
+    int days_x = 0;
+    int days_y = PBL_IF_ROUND_ELSE(58, 52);
+    int days_width = bounds.size.w;
+    int days_height = 50;
+
+    //create text info ///////////////////////////////////////////////
+    s_num_days_text = text_layer_create(
+        GRect(days_x, days_y, days_width, days_height)
+    );
+
+    //format days text ////////////////////////////////////////////
+    text_layer_set_background_color(s_num_days_text, GColorClear);
+    text_layer_set_text_color(s_num_days_text, GColorBlack);
+    text_layer_set_text(s_num_days_text, "preparing");
+    text_layer_set_font(s_num_days_text,
+        fonts_get_system_font(FONT_KEY_GOTHIC_24_BOLD));
+    text_layer_set_text_alignment(s_num_days_text, GTextAlignmentCenter);
+
+    //add days text ////////////////////////////////////////////
+    layer_add_child(window_layer, text_layer_get_layer(s_num_days_text));
 }
 
 static void main_window_unload(Window *window)
@@ -65,6 +160,7 @@ static void main_window_unload(Window *window)
 static void init()
 {
     s_seconds_left = 100000;
+    set_times();
 
     s_main_window = window_create();
 
