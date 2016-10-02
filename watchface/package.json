@@ -6,7 +6,9 @@
     "pebble": {
         "displayName": "The Final Countdown",
         "enableMultiJS": true,
-        "messageKeys": [],
+        "messageKeys": [
+            "ETD"
+        ],
         "projectType": "native",
         "resources": {
             "media": []

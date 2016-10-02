@@ -200,9 +200,30 @@ static void main_window_unload(Window *window)
 
 }
 
+static void inbox_received_callback(DictionaryIterator *iterator, void *context)
+{
+    Tuple *demise_tuple = dict_find(iterator, MESSAGE_KEY_ETD);
+    if(demise_tuple)
+    {
+        int32_t etd = demise_tuple->value->int32;
+        s_seconds_left = (unsigned int)etd;
+    }
+}
+
+static void inbox_dropped_callback(AppMessageResult reason, void *context)
+{
+
+}
+
 static void init()
 {
     s_seconds_left = 100000;
+
+    app_message_register_inbox_received(inbox_received_callback);
+    app_message_register_inbox_dropped(inbox_dropped_callback);
+
+    app_message_open(128, 128);
+
     set_times();
 
     s_main_window = window_create();
